@@ -1,0 +1,22 @@
+{
+    "name": "My Dockerized Project",
+    "image": "mcr.microsoft.com/vscode/devcontainers/base:ubuntu", // Choose an appropriate base image
+    "features": {
+      "docker-in-docker": "latest"
+    },
+    "extensions": [
+      "ms-azuretools.vscode-docker" // Docker extension for VS Code
+    ],
+    "postCreateCommand": "docker-compose up", // Run Docker compose after setup
+    "settings": {
+      "terminal.integrated.defaultProfile.linux": "bash"
+    },
+    "forwardPorts": [5000], // Adjust based on the ports your app uses
+    "portsAttributes": {
+      "3000": {
+        "label": "Application",
+        "onAutoForward": "openPreview"
+      }
+    }
+  }
+  
