@@ -1,0 +1,13 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/automatic-time-379113-5440df4089b9.json
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
