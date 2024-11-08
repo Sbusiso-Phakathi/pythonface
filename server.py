@@ -38,7 +38,7 @@ def recognize_face():
     if unknown_encodings:
         unknown_encoding = unknown_encodings[0]
                         
-        results = face_recognition.compare_faces([known_encoding], unknown_encoding, tolerance=0.3)
+        results = face_recognition.compare_faces([known_encoding], unknown_encoding, tolerance=0.35)
                         
         if results[0]:
            
