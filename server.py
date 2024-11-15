@@ -150,22 +150,22 @@ def recognize_face():
     
     return jsonify({"faces": faces_data})
 
-@app.route('/add', methods=['POST'])
-def add():
-    # Get form data
-    data = request.get_json()
-    name = data.get('name')
-    id = data.get('id')
-    # print(name)
-    # Connect to the database and insert data
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO movies2 (name, id) VALUES (%s, %s)", (name, id))
-    conn.commit()
-    cur.close()
-    conn.close()
+# @app.route('/add', methods=['POST'])
+# def add():
+#     # Get form data
+#     data = request.get_json()
+#     name = data.get('name')
+#     id = data.get('id')
+#     # print(name)
+#     # Connect to the database and insert data
+#     conn = get_db_connection()
+#     cur = conn.cursor()
+#     cur.execute("INSERT INTO movies2 (name, id) VALUES (%s, %s)", (name, id))
+#     conn.commit()
+#     cur.close()
+#     conn.close()
 
-    return "hyuhgu"
+#     return "hyuhgu"
 
 
 @app.route('/upload-image', methods=['POST'])
