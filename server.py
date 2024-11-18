@@ -90,12 +90,11 @@ def recognize_face():
                     current_datetime = datetime.now()
 
                     cur.execute("SELECT datetime FROM movies WHERE name = %s and date = %s", (known_face['name'], current_date,))
-                    print(current_date)
 
                     result = cur.fetchone()
-                    print(result[0])
+                    print(result)
 
-                    if not result[0]:
+                    if result == None:
                         print('gbdfg')
 
                         cur.execute('''INSERT INTO movies (name, id, date, datetime) VALUES (%s, %s, %s, %s)''', (known_face['name'], 1, current_date,current_datetime))
@@ -110,7 +109,7 @@ def recognize_face():
                         "time": result[0]
                             })
                         matched = True
-                    elif result[0]:
+                    elif result != None:
                         print("esfd")
                         faces_data.append({
                         "status": "ok",
