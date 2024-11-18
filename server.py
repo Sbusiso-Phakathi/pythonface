@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, redirect, render_template
+from flask import Flask, request, jsonify, redirect, render_template,  url_for, flash, session
 from flask_cors import CORS
 import face_recognition
 from PIL import Image
@@ -10,10 +10,77 @@ import base64
 from datetime import date
 from datetime import datetime
 
+
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
+import ssl
+
+
+# Email configuration
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'zamokuhlengcobo362@gmail.com'
+EMAIL_HOST_PASSWORD = 'qrtlhufkzkcdkayo'
+
+# Helper function for sending verification emails
+
+
+# Routes for different functionalities
+
+# @app.route('/otp', methods=['GET', 'POST'])
+# def otp():
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         password = request.form['password']
+
+#         # Check if code matches
+#         query = text("SELECT verification_code FROM users WHERE email = :email")
+#         with engine.connect() as conn:
+#             result = conn.execute(query, {'email': email}).fetchone()
+#         if len(result[0]) > 0:
+#             page = "index.html"
+#         else:
+#             page = "login.html"
+
+
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5175"}})
 
 known_faces = []
+
+
+def generate_verification_code():
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_verification_email(email, code):
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_HOST_USER = 'zamokuhlengcobo362@gmail.com'
+    EMAIL_HOST_PASSWORD = 'qrtlhufkzkcdkayo'
+
+    subject = "Your Verification Code"
+    body = f"Your verification code is: {code}"
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_HOST_USER
+    msg['To'] = email
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+            server.starttls(context=context)
+            server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+            server.sendmail(EMAIL_HOST_USER, email, msg.as_string())
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+code = generate_verification_code()
+print(code)
+
+send_verification_email("phaks323@gmail.com", code)
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -139,7 +206,7 @@ def upload_image():
 
     image_file = request.files['image']
 
-    image_data = image_file.read()
+    image_data1 = image_file.read()
     name = request.form.get('name') 
     user_id = request.form.get('id')  
     print(name)
@@ -148,7 +215,7 @@ def upload_image():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('''INSERT INTO movies2 (name, id, image_data) VALUES (%s, %s, %s)''', (name, user_id, psycopg2.Binary(image_data),))
+        cur.execute('''INSERT INTO movies2 (name, id, image_data) VALUES (%s, %s, %s)''', (name, user_id, psycopg2.Binary(image_data1),))
 
         conn.commit()
         cur.close()
