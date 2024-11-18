@@ -6,6 +6,9 @@ from PIL import Image
 import numpy as np
 import io, requests
 import psycopg2
+import base64
+from datetime import date
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5175"}})
@@ -34,6 +37,7 @@ try:
         if result:
             name = result[0]
             image_data = result[1]
+            # date = result[2]
 
             image = Image.open(io.BytesIO(image_data))
 
@@ -46,7 +50,9 @@ try:
         if encoding:
             known_faces.append({
                     "name": name,
-                    "encoding": encoding[0]
+                    "encoding": encoding[0],
+                    "image":image_data,
+                    # "date": date
                 })
 except Exception as e:
         print(f"Error: {e}")
@@ -76,19 +82,52 @@ def recognize_face():
             results = face_recognition.compare_faces([known_face["encoding"]], unknown_encoding, tolerance=0.39)
             
             if results[0]:
-                print(unknown_encoding)
-                print(known_face)
-                faces_data.append({
-                    "location": {"top": "ok", "right": "ok", "bottom": "ok", "left": "ok"},
-                    "name": known_face["name"]
-                })
-                matched = True
+
+                try:
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    current_date = date.today()
+                    current_datetime = datetime.now()
+
+                    cur.execute("SELECT datetime FROM movies WHERE name = %s and date = %s", (known_face['name'], current_date,))
+                    print(current_date)
+
+                    result = cur.fetchone()
+                    print(result[0])
+
+                    if not result[0]:
+                        print('gbdfg')
+
+                        cur.execute('''INSERT INTO movies (name, id, date, datetime) VALUES (%s, %s, %s, %s)''', (known_face['name'], 1, current_date,current_datetime))
+
+                        conn.commit()
+                        cur.close()
+                        conn.close()
+
+                        faces_data.append({
+                        "status": "ok",
+                        "name": known_face["name"],
+                        "time": result[0]
+                            })
+                        matched = True
+                    elif result[0]:
+                        print("esfd")
+                        faces_data.append({
+                        "status": "ok",
+                        "name": known_face["name"],
+                        "time": result[0]
+
+                            })
+                        matched = True
+
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
                 break  
        
         if not matched:
             faces_data.append({
-                "location": {"top": "bad", "right": "bad", "bottom": "bad", "left": "bad"},
-                "name": "Unknown"
+                "status": "bad",
+                "name": "Unknown",
             })
     
     return jsonify({"faces": faces_data})
@@ -116,7 +155,7 @@ def upload_image():
         cur.close()
         conn.close()
 
-        return jsonify({"message": "Image uploaded successfully!"}), 200
+        return jsonify({"name": name}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
