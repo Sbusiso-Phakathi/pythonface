@@ -22,31 +22,38 @@ def get_db_connection():
     )
     return conn
 
-def add_known_face(image_url, name="Unknown"):
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        image = Image.open(io.BytesIO(response.content))
-
-        if image.mode == "RGBA":
-            image = image.convert("RGB")
+try:
+    conn = get_db_connection()
+    cur = conn.cursor()
         
+    query = "SELECT name, image_data FROM movies2;"
+    cur.execute(query)
+    results = cur.fetchall()
+
+    for result in results:
+        if result:
+            name = result[0]
+            image_data = result[1]
+
+            image = Image.open(io.BytesIO(image_data))
+
+            if image.mode == "RGBA":
+                image = image.convert("RGB")
+            
         known_image = np.array(image)
         encoding = face_recognition.face_encodings(known_image)
 
         if encoding:
             known_faces.append({
-                "name": name,
-                "encoding": encoding[0]
-            })
-
-known_face_urls = [
-    ("https://github.com/Sbusiso-Phakathi/recruit/blob/main/sbusisophakathi.jpg?raw=true", "Sbusiso"),
-    ("https://github.com/Sbusiso-Phakathi/recruit/blob/main/bonolo.jpg?raw=true", "Phakathi"),
-    ("https://github.com/Sbusiso-Phakathi/recruit/blob/main/abbie.jpg?raw=true", "Abbie"),
-]
-
-for url, name in known_face_urls:
-    add_known_face(url, name)
+                    "name": name,
+                    "encoding": encoding[0]
+                })
+except Exception as e:
+        print(f"Error: {e}")
+finally:
+    if conn:
+        cur.close()
+        conn.close()
 
 @app.route('/recognize-face', methods=['POST'])
 def recognize_face():
