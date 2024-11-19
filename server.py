@@ -173,7 +173,6 @@ from PIL import Image
 import numpy as np
 import io
 import psycopg2
-from psycopg2 import sql
 from datetime import date, datetime
 
 app = Flask(__name__)
