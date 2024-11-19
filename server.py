@@ -174,7 +174,10 @@ import numpy as np
 import io
 import psycopg2
 from datetime import date, datetime
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5175"}})
 
@@ -182,13 +185,23 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:5175"}})
 known_faces = []
 
 # Database connection function
+# def get_db_connection():
+#     return psycopg2.connect(
+#         host="129.232.211.166",
+#         database="events",
+#         user="dylan",
+#         port=5432,
+#         password="super123duper"
+#     )
+# import os
+
 def get_db_connection():
     return psycopg2.connect(
-        host="129.232.211.166",
-        database="events",
-        user="dylan",
-        port=5432,
-        password="super123duper"
+        host=os.environ.get("DB_HOST"),
+        database=os.environ.get("DB_NAME"),
+        user=os.environ.get("DB_USER"),
+        port=os.environ.get("DB_PORT"),
+        password=os.environ.get("DB_PASSWORD")
     )
 
 # Load known faces from the database
