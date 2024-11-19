@@ -184,17 +184,6 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:5175"}})
 # Store known faces in memory
 known_faces = []
 
-# Database connection function
-# def get_db_connection():
-#     return psycopg2.connect(
-#         host="129.232.211.166",
-#         database="events",
-#         user="dylan",
-#         port=5432,
-#         password="super123duper"
-#     )
-# import os
-
 def get_db_connection():
     return psycopg2.connect(
         host=os.environ.get("DB_HOST"),
