@@ -25,7 +25,7 @@ RUN pip install numpy
 RUN pip install -r requirements.txt
 
 # Step 5: Expose the Flask port
-EXPOSE 5000
+EXPOSE 5002
 
 # Step 6: Set environment variables
 ENV FLASK_APP=server.py
