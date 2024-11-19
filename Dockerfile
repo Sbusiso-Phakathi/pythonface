@@ -22,6 +22,7 @@ RUN pip install Flask
 RUN pip install flask_cors
 RUN pip install pillow
 RUN pip install numpy
+RUN pip install psycopg-binary
 RUN pip install -r requirements.txt
 
 # Step 5: Expose the Flask port

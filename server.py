@@ -184,11 +184,11 @@ known_faces = []
 # Database connection function
 def get_db_connection():
     return psycopg2.connect(
-        host="localhost",
-        database="todo",
-        user="postgres",
-        port=5430,
-        password=""
+        host="129.232.211.166",
+        database="events",
+        user="dylan",
+        port=5432,
+        password="super123duper"
     )
 
 # Load known faces from the database
@@ -197,16 +197,19 @@ def load_known_faces():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT name, image_data FROM movies2;")
+        cur.execute("SELECT name, image_data FROM todo;")
         results = cur.fetchall()
 
         for name, image_data in results:
             image = Image.open(io.BytesIO(image_data))
+            print(image)
+
 
             if image.mode == "RGBA":
                 image = image.convert("RGB")
 
             known_image = np.array(image)
+
             encoding = face_recognition.face_encodings(known_image)
             if encoding:
                 known_faces.append({
@@ -252,7 +255,7 @@ def recognize_face():
 
                     # Check if the user already exists for today
                     cur.execute(
-                        "SELECT datetime FROM movies WHERE name = %s AND date = %s",
+                        "SELECT datetime FROM admin WHERE name = %s AND date = %s",
                         (known_face['name'], current_date)
                     )
                     result = cur.fetchone()
@@ -260,7 +263,7 @@ def recognize_face():
                     if result is None:
                         # Insert a new record
                         cur.execute(
-                            '''INSERT INTO movies (name, id, date, datetime)
+                            '''INSERT INTO admin (name, userid, date, datetime)
                                VALUES (%s, %s, %s, %s)''',
                             (known_face['name'], 1, current_date, current_datetime)
                         )
@@ -306,7 +309,7 @@ def upload_image():
         cur = conn.cursor()
 
         cur.execute(
-            '''INSERT INTO movies2 (name, id, image_data)
+            '''INSERT INTO todo (name, id, image_data)
                VALUES (%s, %s, %s)''',
             (name, user_id, psycopg2.Binary(image_data))
         )
