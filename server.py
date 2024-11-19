@@ -234,11 +234,11 @@ def recognize_face():
     image_np = np.array(image)
 
     unknown_encodings = face_recognition.face_encodings(image_np)
+
     faces_data = []
 
     if unknown_encodings:
         unknown_encoding = unknown_encodings[0]
-        print(unknown_encodings)
 
         matched = False
         for known_face in known_faces:
@@ -294,7 +294,7 @@ def upload_image():
     if 'image' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
 
-    image_file1 = request.files['image']
+    image_file = request.files['image']
     name = request.form.get('name')
     user_id = request.form.get('id')
 
@@ -302,7 +302,7 @@ def upload_image():
         return jsonify({"error": "Name and ID are required"}), 400
 
     try:
-        image_data = image_file1.read()
+        image_data = image_file.read()
         conn = get_db_connection()
         cur = conn.cursor()
 
