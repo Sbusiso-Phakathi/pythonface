@@ -22,8 +22,9 @@ RUN pip install Flask
 RUN pip install flask_cors
 RUN pip install pillow
 RUN pip install numpy
-RUN pip install psycopg-binary
+RUN pip install psycopg2-binary
 RUN pip install -r requirements.txt
+RUN pip install python-dotenv
 
 # Step 5: Expose the Flask port
 EXPOSE 5002
