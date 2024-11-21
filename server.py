@@ -31,7 +31,7 @@ def load_known_faces():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT name, image_data FROM todo;")
+        cur.execute("SELECT name, image_data FROM learners;")
         results = cur.fetchall()
 
         for name, image_data in results:
@@ -121,6 +121,37 @@ def recognize_face():
 
     return jsonify({"faces": faces_data})
 
+
+@app.route('/cohorts', methods=['POST'])
+def cohorts():
+
+    cohortname = request.form.get('cohortname')
+    siteid = request.form.get('siteid')
+
+
+    if not cohortname or not siteid:
+        return jsonify({"error": "Name and ID are required"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            '''INSERT INTO cohorts ( cohortname, site_id)
+               VALUES (%s, %s)''',
+            (cohortname, int(siteid))
+        )
+        conn.commit()
+
+        return jsonify({"message": "Cohort added..."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -128,20 +159,23 @@ def upload_image():
 
     image_file = request.files['image']
     name = request.form.get('name')
-    user_id = request.form.get('id')
+    surname = request.form.get('surname')
+    lid = request.form.get('lid')
+    cohort = request.form.get('cohort')
+    email = request.form.get('email')
 
-    if not name or not user_id:
+    if not name:
         return jsonify({"error": "Name and ID are required"}), 400
 
     try:
         image_data = image_file.read()
         conn = get_db_connection()
         cur = conn.cursor()
-
+        
         cur.execute(
-            '''INSERT INTO todo (name, id, image_data)
-               VALUES (%s, %s, %s)''',
-            (name, user_id, psycopg2.Binary(image_data))
+            '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data)
+               VALUES (%s, %s, %s, %s, %s, %s)''',
+            (name, surname, lid, int(cohort), email, psycopg2.Binary(image_data))
         )
         conn.commit()
 
@@ -154,6 +188,102 @@ def upload_image():
             conn.close()
 
 load_known_faces()
+
+@app.route('/learners', methods=['GET'])
+def get_data():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email FROM learners as lr
+                        join cohorts as ch  using(cohort_id) 
+                        join sites as st using(site_id) ''')
+    rows = cursor.fetchall()
+
+    cursor.execute('''SELECT cohortname from cohorts''')
+    rows2 = cursor.fetchall()
+
+    cursor.execute('''SELECT cohort_id from cohorts''')
+    rows3 = cursor.fetchall()
+
+    cursor.execute('''SELECT ch.cohortname, COUNT(*) AS learner_count
+                    FROM learners AS lr
+                    JOIN cohorts AS ch ON lr.cohort_id = ch.cohort_id
+                    GROUP BY ch.cohort_id, ch.cohortname;''')
+    rows4 = cursor.fetchall()
+
+    print(rows4)
+
+    all = [item[0] for item in rows2]
+    allids = [item[0] for item in rows3]
+    # Transforming the data into a JSON-friendly format
+    data = [
+        {
+            "id" : row[0],
+            "name": row[1],
+            "surname": row[2],
+            "site": row[3],
+            "cohort": row[4],
+            "lid": row[5],
+            "email": row[6],
+            "all": all,
+            "allids": allids
+        }
+        for row in rows
+    ]
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(data)
+
+@app.route('/users/<int:id>', methods=['GET'])
+def users(id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if id != 5000:
+        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email  FROM learners as lr
+                        join cohorts as ch  using(cohort_id) 
+                    join sites as st using(site_id) where cohort_id=%s''',(id,))
+    else:
+        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email  FROM learners as lr
+                        join cohorts as ch  using(cohort_id) 
+                    join sites as st using(site_id)''')
+    rows = cursor.fetchall()
+
+    # Transforming the data into a JSON-friendly format
+    data = [
+        {
+            "id" : row[0],
+            "name": row[1],
+            "surname": row[2],
+            "site": row[3],
+            "cohort": row[4],
+            "lid": row[5],
+            "email": row[6],
+        }
+        for row in rows
+    ]
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(data)
+
+@app.route('/delet/<int:id>', methods=['DELETE'])
+def delet(id):
+    data = []
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM learners where learner_id = %s", (id,))
+    data.append({
+                        "status": "ok",
+                    })
+    # Transforming the data into a JSON-friendly format
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
