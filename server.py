@@ -158,7 +158,7 @@ def upload_image():
     image_file = request.files['image']
     name = request.form.get('name')
     surname = request.form.get('surname')
-    lid = request.form.get('lid')
+    lid = request.form.get('learnernumber')
     cohort = request.form.get('cohort')
     email = request.form.get('email')
 
