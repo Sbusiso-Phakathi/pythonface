@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 
 known_faces = []
 
@@ -142,7 +142,7 @@ def cohorts():
         )
         conn.commit()
 
-        return jsonify({"message": "Cohort added..."}), 200
+        return jsonify({"message": "ok"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -161,7 +161,6 @@ def upload_image():
     lid = request.form.get('learnernumber')
     cohort = request.form.get('cohort')
     email = request.form.get('email')
-
     if not name:
         return jsonify({"error": "Name and ID are required"}), 400
 
@@ -169,7 +168,7 @@ def upload_image():
         image_data = image_file.read()
         conn = get_db_connection()
         cur = conn.cursor()
-        print('dfscds')
+        print(cohort)
 
         cur.execute(
             '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data)
@@ -366,16 +365,6 @@ def delet(id):
     return jsonify(data)
 
 
-from flask import Flask, jsonify
-import psycopg2
-from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)
-
-# Database connection
-
-
 @app.route('/attendance', methods=['GET'])
 def attendance():
     conn = get_db_connection()
@@ -469,9 +458,6 @@ def attendance():
     }
 
     return jsonify(data)
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
 
 
 
