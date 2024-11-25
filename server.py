@@ -311,18 +311,17 @@ def get_data_for_date():
 
     try:
         # Validate the date format
-        datetime.strptime(date, "%Y-%m-%d")
-        
+        # date = datetime.strptime(date, "%Y-%m-%d")
         # Connect to the PostgreSQL database
         conn = get_db_connection()
         cursor = conn.cursor()
+        print(date)
 
         # Query the database for records that match the selected date
         cursor.execute("SELECT * FROM admin WHERE date = %s and cohort_id = %s", (date,cohort,))
 
         # Fetch the results
         rows = cursor.fetchall()
-
         data = [
         {
             "id" : row[0],
@@ -335,6 +334,7 @@ def get_data_for_date():
         }
         for row in rows
     ]
+        print(data)
 
         # Close the database connection
         cursor.close()
@@ -364,6 +364,116 @@ def delet(id):
     connection.close()
 
     return jsonify(data)
+
+
+from flask import Flask, jsonify
+import psycopg2
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+# Database connection
+
+
+@app.route('/attendance', methods=['GET'])
+def attendance():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query for employee metrics (Days Present, Punctuality, Cost to Company)
+    employee_metrics_query = """
+    SELECT
+        name,
+        COUNT(DISTINCT day) AS days_present,
+        SUM(CASE 
+            WHEN hour = 8 AND minute <= 5 THEN 1
+            ELSE 0
+        END) AS on_time,
+        SUM(CASE
+            WHEN hour = 8 AND minute > 5 THEN 1
+            WHEN hour = 9 THEN 1
+            ELSE 0
+        END) AS late,
+        SUM(CASE
+            WHEN hour > 9 THEN 1
+            ELSE 0
+        END) AS very_late,
+        SUM(CASE
+            WHEN hour > 8 THEN ((hour - 8) * 60) + minute
+            WHEN hour = 8 AND minute > 5 THEN (minute - 5)
+            ELSE 0
+        END) AS cost_to_company_minutes
+    FROM attendance
+    GROUP BY name;
+    """
+
+    # Query for attendance vs day
+    attendance_per_day_query = """
+    SELECT 
+        day,
+        COUNT(DISTINCT name) AS employees_present
+    FROM attendance
+    GROUP BY day
+    ORDER BY day;
+    """
+
+    # Query for daily late comers
+    daily_late_comers_query = """
+    SELECT 
+        day,
+        COUNT(CASE
+            WHEN hour > 8 OR (hour = 8 AND minute > 5) THEN 1
+            ELSE NULL
+        END) AS late_comers
+    FROM attendance
+    GROUP BY day
+    ORDER BY day;
+    """
+
+    # Execute all queries
+    cursor.execute(employee_metrics_query)
+    employee_metrics = cursor.fetchall()
+
+    cursor.execute(attendance_per_day_query)
+    attendance_per_day = cursor.fetchall()
+
+    cursor.execute(daily_late_comers_query)
+    daily_late_comers = cursor.fetchall()
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+
+    # Format the results
+    data = {
+        "employee_metrics": [
+            {
+                "name": row[0],
+                "days_present": row[1],
+                "on_time": row[2],
+                "late": row[3],
+                "very_late": row[4],
+                "cost_to_company_minutes": row[5]
+            }
+            for row in employee_metrics
+        ],
+        "attendance_per_day": [
+            {"day": row[0], "employees_present": row[1]}
+            for row in attendance_per_day
+        ],
+        "daily_late_comers": [
+            {"day": row[0], "late_comers": row[1]}
+            for row in daily_late_comers
+        ],
+    }
+
+    return jsonify(data)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
