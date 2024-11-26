@@ -43,7 +43,7 @@ def load_known_faces():
         #             "image": image_data,
         #         })
 
-        folder_path = "./images"
+        folder_path = "/users/sbusisophakathi/desktop"
 
 # Iterate through all files in the folder
         for file_name in os.listdir(folder_path):
@@ -181,7 +181,7 @@ def upload_image():
     array_data = pickle.dumps(unknown_encodings)
 
 
-    UPLOAD_FOLDER = '/images'
+    UPLOAD_FOLDER = 'users/sbusisophakathi/desktop'
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     # Save the uploaded file
