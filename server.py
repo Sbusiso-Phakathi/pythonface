@@ -35,7 +35,7 @@ def load_known_faces():
         cur.execute("SELECT name, image_data FROM learners;")
         results = cur.fetchall()
         for name, image_data in results:
-            
+
             if image_data:
                 known_faces.append({
                     "name": name,
@@ -153,7 +153,6 @@ def upload_image():
 
     unknown_encodings = face_recognition.face_encodings(image_np)
     array_data = pickle.dumps(unknown_encodings)
-    print(array_data)
     name = request.form.get('name')
     surname = request.form.get('surname')
     lid = request.form.get('learnernumber')
