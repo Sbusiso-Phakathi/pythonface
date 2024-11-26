@@ -8,6 +8,7 @@ import io
 import psycopg2
 from datetime import date, datetime
 from dotenv import load_dotenv
+import pickle
 
 
 load_dotenv()
@@ -33,22 +34,12 @@ def load_known_faces():
         cur = conn.cursor()
         cur.execute("SELECT name, image_data FROM learners;")
         results = cur.fetchall()
-
         for name, image_data in results:
-            image = Image.open(io.BytesIO(image_data))
-            print(image)
-
-
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
-
-            known_image = np.array(image)
-
-            encoding = face_recognition.face_encodings(known_image)
-            if encoding:
+            
+            if image_data:
                 known_faces.append({
                     "name": name,
-                    "encoding": encoding[0],
+                    "encoding": pickle.loads(image_data)[0],
                     "image": image_data,
                 })
 
@@ -69,6 +60,7 @@ def recognize_face():
     image_np = np.array(image)
 
     unknown_encodings = face_recognition.face_encodings(image_np)
+    
 
     faces_data = []
 
@@ -96,7 +88,7 @@ def recognize_face():
                         cur.execute(
                             '''INSERT INTO admin (name, userid, date, datetime, cohort_id)
                                VALUES (%s, %s, %s, %s, %s)''',
-                            (known_face['name'], 1, current_date, current_datetime, 11)
+                            (known_face['name'], 1, current_date, current_datetime, 17)
                         )
                         conn.commit()
 
@@ -156,6 +148,12 @@ def upload_image():
         return jsonify({"error": "No image part in the request"}), 400
 
     image_file = request.files['image']
+    image = Image.open(image_file.stream).convert("RGB")
+    image_np = np.array(image)
+
+    unknown_encodings = face_recognition.face_encodings(image_np)
+    array_data = pickle.dumps(unknown_encodings)
+    print(array_data)
     name = request.form.get('name')
     surname = request.form.get('surname')
     lid = request.form.get('learnernumber')
@@ -168,12 +166,12 @@ def upload_image():
         image_data = image_file.read()
         conn = get_db_connection()
         cur = conn.cursor()
-        print(cohort)
+        print(image_file)
 
         cur.execute(
             '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data)
                VALUES (%s, %s, %s, %s, %s, %s)''',
-            (name, surname, int(lid), int(cohort), email, psycopg2.Binary(image_data))
+            (name, surname, int(lid), int(cohort), email, array_data)
         )
 
         conn.commit()
@@ -463,3 +461,5 @@ def attendance():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
+
+
