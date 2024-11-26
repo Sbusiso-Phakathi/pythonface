@@ -34,14 +34,41 @@ def load_known_faces():
         cur = conn.cursor()
         cur.execute("SELECT name, image_data FROM learners;")
         results = cur.fetchall()
-        for name, image_data in results:
+        # for name, image_data in results:
 
-            if image_data:
-                known_faces.append({
-                    "name": name,
-                    "encoding": pickle.loads(image_data)[0],
-                    "image": image_data,
-                })
+        #     if image_data:
+        #         known_faces.append({
+        #             "name": name,
+        #             "encoding": pickle.loads(image_data)[0],
+        #             "image": image_data,
+        #         })
+
+        folder_path = "./images"
+
+# Iterate through all files in the folder
+        for file_name in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file_name)
+            
+            try:
+                # Open and process only image files
+                with Image.open(file_path).convert("RGB") as image:
+                    # Convert the image to a NumPy array
+                    image_np = np.array(image)
+                    
+                    # Get face encodings
+                    unknown_encodings = face_recognition.face_encodings(image_np)
+                    
+                    if unknown_encodings:
+                        known_faces.append({
+                            "name": "sbu",
+                            "encoding": unknown_encodings,
+                            "image": "sbu",
+                        })
+                    else:
+                        print(f"No faces found in {file_name}")
+            except Exception as e:
+                print(f"Error processing file {file_name}: {e}")
+
 
     except Exception as e:
         print(f"Error loading known faces: {e}")
@@ -152,6 +179,24 @@ def upload_image():
 
     unknown_encodings = face_recognition.face_encodings(image_np)
     array_data = pickle.dumps(unknown_encodings)
+
+
+    UPLOAD_FOLDER = '/images'
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    # Save the uploaded file
+    image_file = request.files['image']
+    if image_file:
+        # Generate a safe file name
+        filename = image_file.filename
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+    
+    # Save the file to the upload folder
+    image_file.save(file_path)
+    print(f"File saved to {file_path}")
+
+
+
     name = request.form.get('name')
     surname = request.form.get('surname')
     lid = request.form.get('learnernumber')
