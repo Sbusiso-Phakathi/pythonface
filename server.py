@@ -158,6 +158,7 @@ def upload_image():
     lid = request.form.get('learnernumber')
     cohort = request.form.get('cohort')
     email = request.form.get('email')
+    
     if not name:
         return jsonify({"error": "Name and ID are required"}), 400
 
