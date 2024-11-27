@@ -31,11 +31,6 @@ def get_db_connection():
 def load_known_faces():
     global known_faces
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT name, image_data FROM learners;")
-        results = cur.fetchall()
-
         for file_name in os.listdir(images_dir):
             file_path = os.path.join(images_dir, file_name)
             
@@ -59,10 +54,6 @@ def load_known_faces():
 
     except Exception as e:
         print(f"Error loading known faces: {e}")
-    finally:
-        if conn:
-            cur.close()
-            conn.close()
 
 @app.route('/recognize-face', methods=['POST'])
 def recognize_face():
