@@ -42,7 +42,7 @@ def load_known_faces():
                     
                     if unknown_encodings:
                         known_faces.append({
-                            "name": file_name,
+                            "name": "sbu",
                             "encoding": unknown_encodings[0],
                             "image": "sbu",
                         })
@@ -83,7 +83,7 @@ def recognize_face():
                     current_datetime = datetime.now()
 
                     cur.execute(
-                        "SELECT datetime FROM admin WHERE email = %s AND date = %s",
+                        "SELECT datetime FROM admin WHERE name = %s AND date = %s",
                         (known_face['name'], current_date)
                     )
                     result = cur.fetchone()
