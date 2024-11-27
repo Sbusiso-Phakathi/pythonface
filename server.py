@@ -15,7 +15,8 @@ load_dotenv()
 app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
-
+project_dir = os.path.dirname(os.path.abspath(__file__))  # Current project directory
+images_dir = os.path.join(project_dir, "images")
 known_faces = []
 
 def get_db_connection():
@@ -43,11 +44,11 @@ def load_known_faces():
         #             "image": image_data,
         #         })
 
-        folder_path = "/users/sbusisophakathi/desktop"
+        folder_path = "users/images"
 
 # Iterate through all files in the folder
-        for file_name in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, file_name)
+        for file_name in os.listdir(images_dir):
+            file_path = os.path.join(images_dir, file_name)
             
             try:
                 # Open and process only image files
@@ -60,8 +61,8 @@ def load_known_faces():
                     
                     if unknown_encodings:
                         known_faces.append({
-                            "name": "sbu",
-                            "encoding": unknown_encodings,
+                            "name": file_name,
+                            "encoding": unknown_encodings[0],
                             "image": "sbu",
                         })
                     else:
@@ -105,7 +106,7 @@ def recognize_face():
                     current_datetime = datetime.now()
 
                     cur.execute(
-                        "SELECT datetime FROM admin WHERE name = %s AND date = %s",
+                        "SELECT datetime FROM admin WHERE email = %s AND date = %s",
                         (known_face['name'], current_date)
                     )
                     result = cur.fetchone()
@@ -168,6 +169,7 @@ def cohorts():
             cur.close()
             conn.close()
 
+
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -177,31 +179,27 @@ def upload_image():
     image = Image.open(image_file.stream).convert("RGB")
     image_np = np.array(image)
 
-    unknown_encodings = face_recognition.face_encodings(image_np)
-    array_data = pickle.dumps(unknown_encodings)
-
-
-    UPLOAD_FOLDER = 'users/sbusisophakathi/desktop'
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-    # Save the uploaded file
-    image_file = request.files['image']
-    if image_file:
-        # Generate a safe file name
-        filename = image_file.filename
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-    
-    # Save the file to the upload folder
-    image_file.save(file_path)
-    print(f"File saved to {file_path}")
-
-
-
     name = request.form.get('name')
     surname = request.form.get('surname')
     lid = request.form.get('learnernumber')
     cohort = request.form.get('cohort')
     email = request.form.get('email')
+
+    unknown_encodings = face_recognition.face_encodings(image_np)
+    array_data = pickle.dumps(unknown_encodings)
+
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
+    file_name = email+".jpg"
+
+    file_path = os.path.join(images_dir, file_name)
+
+    image.save(file_path)  
+
+    print(f"Image saved to {file_path}")
+
+
 
     if not name:
         return jsonify({"error": "Name and ID are required"}), 400
