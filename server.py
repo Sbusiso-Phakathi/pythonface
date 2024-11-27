@@ -35,28 +35,14 @@ def load_known_faces():
         cur = conn.cursor()
         cur.execute("SELECT name, image_data FROM learners;")
         results = cur.fetchall()
-        # for name, image_data in results:
 
-        #     if image_data:
-        #         known_faces.append({
-        #             "name": name,
-        #             "encoding": pickle.loads(image_data)[0],
-        #             "image": image_data,
-        #         })
-
-        folder_path = "users/images"
-
-# Iterate through all files in the folder
         for file_name in os.listdir(images_dir):
             file_path = os.path.join(images_dir, file_name)
             
             try:
-                # Open and process only image files
                 with Image.open(file_path).convert("RGB") as image:
-                    # Convert the image to a NumPy array
                     image_np = np.array(image)
                     
-                    # Get face encodings
                     unknown_encodings = face_recognition.face_encodings(image_np)
                     
                     if unknown_encodings:
@@ -253,7 +239,7 @@ def get_data():
 
     all = [item[0] for item in rows2]
     allids = [item[0] for item in rows3]
-    # Transforming the data into a JSON-friendly format
+
     data = [
         {
             "id" : row[0],
@@ -321,7 +307,6 @@ def users(id):
                     join sites as st using(site_id)''')
     rows = cursor.fetchall()
 
-    # Transforming the data into a JSON-friendly format
     data = [
         {
             "id" : row[0],
@@ -343,23 +328,19 @@ def users(id):
 @app.route('/data', methods=['GET'])
 def get_data_for_date():
     print('fvdf')
-    date = request.args.get('date')  # Get date from the query parameters (e.g., YYYY-MM-DD)
+    date = request.args.get('date')  
     cohort = request.args.get('cohort')
     if not date:
         return jsonify({"error": "Date is required"}), 400
 
     try:
-        # Validate the date format
-        # date = datetime.strptime(date, "%Y-%m-%d")
-        # Connect to the PostgreSQL database
+
         conn = get_db_connection()
         cursor = conn.cursor()
         print(date)
 
-        # Query the database for records that match the selected date
         cursor.execute("SELECT * FROM admin WHERE date = %s and cohort_id = %s", (date,cohort,))
 
-        # Fetch the results
         rows = cursor.fetchall()
         data = [
         {
@@ -375,11 +356,9 @@ def get_data_for_date():
     ]
         print(data)
 
-        # Close the database connection
         cursor.close()
         conn.close()
 
-        # Return the results as JSON
         return jsonify(data)
 
     except psycopg2.Error as e:
@@ -396,7 +375,7 @@ def delet(id):
     data.append({
                         "status": "ok",
                     })
-    # Transforming the data into a JSON-friendly format
+
     connection.commit()
 
     cursor.close()
@@ -410,7 +389,7 @@ def attendance():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Query for employee metrics (Days Present, Punctuality, Cost to Company)
+
     employee_metrics_query = """
     SELECT
         name,
@@ -437,7 +416,6 @@ def attendance():
     GROUP BY name;
     """
 
-    # Query for attendance vs day
     attendance_per_day_query = """
     SELECT 
         day,
@@ -447,7 +425,6 @@ def attendance():
     ORDER BY day;
     """
 
-    # Query for daily late comers
     daily_late_comers_query = """
     SELECT 
         day,
@@ -460,7 +437,6 @@ def attendance():
     ORDER BY day;
     """
 
-    # Execute all queries
     cursor.execute(employee_metrics_query)
     employee_metrics = cursor.fetchall()
 
@@ -470,11 +446,9 @@ def attendance():
     cursor.execute(daily_late_comers_query)
     daily_late_comers = cursor.fetchall()
 
-    # Close the connection
     cursor.close()
     conn.close()
 
-    # Format the results
     data = {
         "employee_metrics": [
             {
