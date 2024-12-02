@@ -10,7 +10,6 @@ from datetime import date, datetime
 from dotenv import load_dotenv
 import pickle
 
-
 load_dotenv()
 app = Flask(__name__)
 
@@ -43,7 +42,7 @@ def load_known_faces():
                     
                     if unknown_encodings:
                         known_faces.append({
-                            "name": "sbu",
+                            "name": file_name[0:-4],
                             "encoding": unknown_encodings[0],
                             "image": "sbu",
                         })
@@ -51,7 +50,6 @@ def load_known_faces():
                         print(f"No faces found in {file_name}")
             except Exception as e:
                 print(f"Error processing file {file_name}: {e}")
-
 
     except Exception as e:
         print(f"Error loading known faces: {e}")
@@ -82,32 +80,40 @@ def recognize_face():
                     cur = conn.cursor()
                     current_date = date.today()
                     current_datetime = datetime.now()
-
+                    # print(known_face["name"])
                     cur.execute(
-                        "SELECT datetime FROM admin WHERE name = %s AND date = %s",
-                        (known_face['name'], current_date)
+                        "SELECT attendance FROM learners WHERE email = %s",
+                        (known_face['name'],)
                     )
-                    result = cur.fetchone()
+                    result = list(cur.fetchone()[0])
+                    marker = int(str(current_datetime)[11:13])
+                    
+                    # if marker > 8 :
+                    result[int(str(current_date)[8:10]) - 1] = "Y"
+                    result  = "{" + ",".join(f"'{item}'" for item in result) + "}"
+
+                    print(result)
 
                     if result is None:
                         cur.execute(
-                            '''INSERT INTO admin (name, userid, date, datetime, cohort_id)
-                               VALUES (%s, %s, %s, %s, %s)''',
-                            (known_face['name'], 1, current_date, current_datetime, 17)
+                            '''UPDATE learners 
+                               SET attendance = %s
+                               WHERE email = %s''',
+                            (result, known_face['name'],)
                         )
                         conn.commit()
 
                     faces_data.append({
                         "status": "ok",
                         "name": known_face["name"],
-                        "time": result[0] if result else current_datetime
+                        "time":  current_datetime
                     })
                 except Exception as e:
                     return jsonify({"error": str(e)}), 500
-                finally:
-                    if conn:
-                        cur.close()
-                        conn.close()
+                # finally:
+                #     if conn:
+                #         cur.close()
+                #         conn.close()
                 break
 
         if not matched:
@@ -178,7 +184,6 @@ def upload_image():
     print(f"Image saved to {file_path}")
 
 
-
     if not name:
         return jsonify({"error": "Name and ID are required"}), 400
 
@@ -210,7 +215,7 @@ load_known_faces()
 def get_data():
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email FROM learners as lr
+    cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.attendance FROM learners as lr
                         join cohorts as ch  using(cohort_id) 
                         join sites as st using(site_id) ''')
     rows = cursor.fetchall()
@@ -221,16 +226,16 @@ def get_data():
     cursor.execute('''SELECT cohort_id from cohorts''')
     rows3 = cursor.fetchall()
 
-    cursor.execute('''SELECT ch.cohortname, COUNT(*) AS learner_count
+    cursor.execute('''SELECT COUNT(*) AS learner_count
                     FROM learners AS lr
                     JOIN cohorts AS ch ON lr.cohort_id = ch.cohort_id
                     GROUP BY ch.cohort_id, ch.cohortname;''')
     rows4 = cursor.fetchall()
 
-    print(rows4)
 
     all = [item[0] for item in rows2]
     allids = [item[0] for item in rows3]
+    counts = [item[0] for item in rows4]
 
     data = [
         {
@@ -241,8 +246,10 @@ def get_data():
             "cohort": row[4],
             "lid": row[5],
             "email": row[6],
+            "attendance": row[7],
             "all": all,
-            "allids": allids
+            "allids": allids,
+            "counts": counts
         }
         for row in rows
     ]
@@ -262,7 +269,7 @@ def search():
     cursor = connection.cursor()
 
     cursor.execute('''
-        SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email FROM learners as lr
+        SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.attendance FROM learners as lr
                         join cohorts as ch  using(cohort_id) 
                         join sites as st using(site_id) 
         WHERE lr.name ILIKE %s OR lr.email ILIKE %s OR lr.surname ILIKE %s
@@ -276,9 +283,32 @@ def search():
             "site": row[3],
             "cohort": row[4],
             "lid": row[5],
-            "email": row[6]}
+            "email": row[6],
+            "attendance": row[7]}
         for row in rows
     ]
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(data)
+
+@app.route('/cohorts', methods=['GET'])
+def cohortsz():
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(''' SELECT * FROM cohorts ''')
+
+    rows = cursor.fetchall()
+    data = [
+        row[0]
+     
+
+        for row in rows
+    ]
+    print(data)
 
     cursor.close()
     connection.close()
@@ -326,7 +356,6 @@ def get_data_for_date():
         return jsonify({"error": "Date is required"}), 400
 
     try:
-
         conn = get_db_connection()
         cursor = conn.cursor()
         print(date)
@@ -380,7 +409,6 @@ def delet(id):
 def attendance():
     conn = get_db_connection()
     cursor = conn.cursor()
-
 
     employee_metrics_query = """
     SELECT
@@ -466,8 +494,5 @@ def attendance():
     return jsonify(data)
 
 
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
-
-
+    app.run(debug=False, port=5002)
