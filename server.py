@@ -87,7 +87,8 @@ def recognize_face():
                     )
                     result = list(cur.fetchone()[0])
                     marker = int(str(current_datetime)[11:13])
-                    
+                    print("ssfd")
+
                     # if marker > 8 :
                     result[int(str(current_date)[8:10]) - 1] = "Y"
                     result  = "{" + ",".join(f"'{item}'" for item in result) + "}"
@@ -194,9 +195,9 @@ def upload_image():
         print(image_file)
 
         cur.execute(
-            '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data)
-               VALUES (%s, %s, %s, %s, %s, %s)''',
-            (name, surname, int(lid), int(cohort), email, array_data)
+            '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data, attendance)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)''',
+            (name, surname, int(lid), int(cohort), email, array_data, '{"H", "H", "Y", "Y", "N", "P", "P", "Y", "N", "N", "P", "H", "H", "Y", "Y", "N", "N", "P", "P", "Y", "H", "Y","Y", "Y", "N", "N", "P", "P", "Y", "H", "Y"}')
         )
 
         conn.commit()
@@ -287,28 +288,6 @@ def search():
             "attendance": row[7]}
         for row in rows
     ]
-
-    cursor.close()
-    connection.close()
-
-    return jsonify(data)
-
-@app.route('/cohorts', methods=['GET'])
-def cohortsz():
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(''' SELECT * FROM cohorts ''')
-
-    rows = cursor.fetchall()
-    data = [
-        row[0]
-     
-
-        for row in rows
-    ]
-    print(data)
 
     cursor.close()
     connection.close()
