@@ -86,16 +86,21 @@ def recognize_face():
                         (known_face['name'],)
                     )
                     result = list(cur.fetchone()[0])
+                    print(known_face["name"])
+
                     marker = int(str(current_datetime)[11:13])
                     print("ssfd")
 
-                    # if marker > 8 :
-                    result[int(str(current_date)[8:10]) - 1] = "Y"
-                    result  = "{" + ",".join(f"'{item}'" for item in result) + "}"
+                    if marker >= 8 :
+                        result[int(str(current_date)[8:10]) - 1] = "U"
+                    else :
+                        result[int(str(current_date)[8:10]) - 1] = "Y"
+
+                    result  = "{" + ",".join(f"{item}" for item in result) + "}"
 
                     print(result)
 
-                    if result is None:
+                    if result:
                         cur.execute(
                             '''UPDATE learners 
                                SET attendance = %s
@@ -184,7 +189,6 @@ def upload_image():
 
     print(f"Image saved to {file_path}")
 
-
     if not name:
         return jsonify({"error": "Name and ID are required"}), 400
 
@@ -195,9 +199,22 @@ def upload_image():
         print(image_file)
 
         cur.execute(
-            '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data, attendance)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)''',
-            (name, surname, int(lid), int(cohort), email, array_data, '{"H", "H", "Y", "Y", "N", "P", "P", "Y", "N", "N", "P", "H", "H", "Y", "Y", "N", "N", "P", "P", "Y", "H", "Y","Y", "Y", "N", "N", "P", "P", "Y", "H", "Y"}')
+            '''INSERT INTO learners ( name, surname, lid, cohort_id, email, image_data, attendance, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec)
+               VALUES (%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s, %s)''',
+            (name, surname, int(lid), int(cohort), email, array_data, 
+             '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',    
+             '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"Y", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}',
+            '{"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","", "", "", "", "", "", "", "", ""}')
         )
 
         conn.commit()
@@ -216,7 +233,7 @@ load_known_faces()
 def get_data():
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.attendance FROM learners as lr
+    cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.aug FROM learners as lr
                         join cohorts as ch  using(cohort_id) 
                         join sites as st using(site_id) ''')
     rows = cursor.fetchall()
@@ -294,16 +311,18 @@ def search():
 
     return jsonify(data)
 
-@app.route('/users/<int:id>', methods=['GET'])
-def users(id):
+@app.route('/users', methods=['GET'])
+def users():
+    id = request.args.get('id')
+
     connection = get_db_connection()
     cursor = connection.cursor()
     if id != 5000:
-        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email  FROM learners as lr
+        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.aug   FROM learners as lr
                         join cohorts as ch  using(cohort_id) 
                     join sites as st using(site_id) where cohort_id=%s''',(id,))
     else:
-        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email  FROM learners as lr
+        cursor.execute('''SELECT lr.learner_id, lr.name, lr.surname, st.sitename, ch.cohortname, lr.lid, lr.email, lr.aug  FROM learners as lr
                         join cohorts as ch  using(cohort_id) 
                     join sites as st using(site_id)''')
     rows = cursor.fetchall()
@@ -317,6 +336,7 @@ def users(id):
             "cohort": row[4],
             "lid": row[5],
             "email": row[6],
+            "attendance": row[7],
         }
         for row in rows
     ]
