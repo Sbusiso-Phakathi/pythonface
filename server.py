@@ -13,7 +13,7 @@ import pickle
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 project_dir = os.path.dirname(os.path.abspath(__file__))  
 images_dir = os.path.join(project_dir, "images")
@@ -314,6 +314,7 @@ def search():
 @app.route('/users', methods=['GET'])
 def users():
     id = request.args.get('id')
+    month = request.args.get('month')
 
     connection = get_db_connection()
     cursor = connection.cursor()
