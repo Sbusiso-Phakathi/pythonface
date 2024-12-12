@@ -13,7 +13,7 @@ import pickle
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 
 project_dir = os.path.dirname(os.path.abspath(__file__))  
 images_dir = os.path.join(project_dir, "images")
