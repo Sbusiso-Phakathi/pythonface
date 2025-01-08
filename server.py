@@ -66,6 +66,7 @@ def recognize_face():
     unknown_encodings = face_recognition.face_encodings(image_np)
     
     faces_data = []
+    print("xxx")
 
     if unknown_encodings:
         unknown_encoding = unknown_encodings[0]
