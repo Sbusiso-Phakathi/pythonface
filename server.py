@@ -13,7 +13,7 @@ import pickle
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "https://reg-u6a6-4eq04i5qx-phaks323s-projects.vercel.app"}})
+CORS(app, resources={r"/*": {"origins": ["https://reg-u6a6-4eq04i5qx-phaks323s-projects.vercel.app","http://localhost:5173"]}})
 
 project_dir = os.path.dirname(os.path.abspath(__file__))  
 images_dir = os.path.join(project_dir, "images")
