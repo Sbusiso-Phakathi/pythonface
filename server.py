@@ -13,7 +13,7 @@ import pickle
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 project_dir = os.path.dirname(os.path.abspath(__file__))  
 images_dir = os.path.join(project_dir, "images")
@@ -495,4 +495,4 @@ def attendance():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5002)
+    app.run(debug=True, port=5002)
