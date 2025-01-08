@@ -13,7 +13,7 @@ import pickle
 load_dotenv()
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "https://reg-u6a6-4eq04i5qx-phaks323s-projects.vercel.app"}})
 
 project_dir = os.path.dirname(os.path.abspath(__file__))  
 images_dir = os.path.join(project_dir, "images")
@@ -27,6 +27,7 @@ def get_db_connection():
         port=os.environ.get("DB_PORT"),
         password=os.environ.get("DB_PASSWORD")
     )
+
 
 def load_known_faces():
     global known_faces
