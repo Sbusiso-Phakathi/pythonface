@@ -67,7 +67,6 @@ def recognize_face():
     unknown_encodings = face_recognition.face_encodings(image_np)
     
     faces_data = []
-    print("xxx")
 
     if unknown_encodings:
         unknown_encoding = unknown_encodings[0]
@@ -82,7 +81,7 @@ def recognize_face():
                     cur = conn.cursor()
                     current_date = date.today()
                     current_datetime = datetime.now()
-                    # print(known_face["name"])
+
                     cur.execute(
                         "SELECT attendance FROM learners WHERE email = %s",
                         (known_face['name'],)
@@ -497,3 +496,103 @@ def attendance():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002)
+
+
+# import cv2
+# import face_recognition
+
+# # Step 1: Capture the known face
+# print("Initializing webcam...")
+# video_capture = cv2.VideoCapture(0)
+
+# print("Look at the camera to capture your face.")
+# while True:
+#     ret, frame = video_capture.read()
+#     if not ret:
+#         print("Failed to access webcam. Exiting.")
+#         break
+
+#     # Display the frame to the user
+#     cv2.imshow('Press "s" to save your face', frame)
+
+#     # Press 's' to save the face
+#     if cv2.waitKey(1) & 0xFF == ord('s'):
+#         known_face_frame = frame
+#         print("Face captured!")
+#         break
+
+# # Release webcam temporarily
+# video_capture.release()
+# cv2.destroyAllWindows()
+
+# # Convert the known face frame to RGB
+# known_face_rgb = cv2.cvtColor(known_face_frame, cv2.COLOR_BGR2RGB)
+
+# # Detect the face in the frame and get its encoding
+# known_face_locations = face_recognition.face_locations(known_face_rgb)
+
+# if len(known_face_locations) == 0:
+#     print("No face detected in the captured frame. Exiting.")
+#     exit()
+
+# known_face_encodings = face_recognition.face_encodings(known_face_rgb, known_face_locations)[0]
+# print("Face encoding saved.")
+
+# # Step 2: Compare new faces in real-time
+# print("Starting real-time face comparison...")
+# video_capture = cv2.VideoCapture(0)
+
+# while True:
+#     # Capture a frame from the webcam
+#     ret, frame = video_capture.read()
+#     if not ret:
+#         print("Failed to access webcam. Exiting.")
+#         break
+
+#     # Resize frame for faster processing
+#     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+#     rgb_small_frame = small_frame[:, :, ::-1]  # Convert BGR to RGB
+
+#     # Detect faces in the current frame
+#     face_locations = face_recognition.face_locations(rgb_small_frame)
+
+#     # Check if faces are detected
+#     if len(face_locations) > 0:
+#         # Compute encodings for detected faces
+#         face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+#     else:
+#         face_encodings = []
+#         print("No faces detected in the frame.")
+
+#     # Compare detected faces with the known face encoding
+#     for face_encoding, face_location in zip(face_encodings, face_locations):
+#         matches = face_recognition.compare_faces([known_face_encodings], face_encoding)
+#         name = "Unknown"
+
+#         if matches[0]:
+#             name = "Matched!"
+
+#         # Scale face locations back up to the original frame size
+#         top, right, bottom, left = face_location
+#         top *= 4
+#         right *= 4
+#         bottom *= 4
+#         left *= 4
+
+#         # Draw a box around the face
+#         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+
+#         # Display the match result
+#         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 255, 0), cv2.FILLED)
+#         cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+#     # Display the resulting frame
+#     cv2.imshow('Real-Time Face Comparison', frame)
+
+#     # Break the loop on 'q' key press
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+
+# # Release webcam and close windows
+# video_capture.release()
+# cv2.destroyAllWindows()
